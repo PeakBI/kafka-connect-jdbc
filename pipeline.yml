@@ -19,6 +19,12 @@ Parameters:
   KafkaConnectS3RepoBranch:
     Type: String
     Default: master
+  KafkaRepoBranch:
+    Type: String
+    Default: master
+  JsonSchemaConverterRepoBranch:
+    Type: String
+    Default: master
   Stage:
     Type: String
     Default: latest
@@ -254,6 +260,10 @@ Resources:
             Value: !Sub "${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ImageRepo}"
           - Name: KAFKA_CONNECT_S3_BRANCH
             Value: !Ref KafkaConnectS3RepoBranch
+          - Name: KAFKA_BRANCH
+            Value: !Ref KafkaRepoBranch
+          - Name: JSON_SCHEMA_CONVERTER_BRANCH
+            Value: !Ref JsonSchemaConverterRepoBranch
           - Name: GIT_TOKEN
             Value: !Ref GithubOauthToken
       Name: !Sub ${AWS::StackName}
@@ -276,13 +286,23 @@ Resources:
                 - git clone -b $KAFKA_CONNECT_S3_BRANCH https://$GIT_TOKEN@github.com/PeakBI/kafka-connect-storage-cloud.git
                 - ls && cd kafka-connect-storage-cloud
                 - mvn install -D maven.test.skip=true
-                - cd .. && mvn install -D maven.test.skip=true
+                - cd .. && git clone -b $KAFKA_BRANCH https://$GIT_TOKEN@github.com:PeakBI/kafka.git
+                - cd kafka
+                - ./gradlew jar
+                - cd .. && git clone -b $JSON_SCHEMA_CONVERTER_BRANCH https://$GIT_TOKEN@github.com:PeakBI/schema-registry.git
+                - cd schema-registry/json-schema-converter
+                - mvn install -D maven.test.skip=true
+                - cd ../../ && mvn install -D maven.test.skip=true
                 - docker build . --tag $IMAGE_URL:$STAGE
             post_build:
               commands:
                 - echo Build completed on `date`
                 - aws s3 cp --recursive --exclude "*" --include "kafka-connect-jdbc-5.5.1.jar" target/ s3://ais-$STAGE-kafka-connect-jdbc/
                 - cd kafka-connect-storage-cloud && aws s3 cp --recursive --exclude "*" --include "kafka-connect-s3-5.5.1.jar" kafka-connect-s3/target/ s3://ais-$STAGE-kafka-connect-jdbc/ && cd ..
+                - cd kafka/connect && aws s3 cp --recursive --exclude "*" --include "connect-api-6.1.0-0-ccs.jar" api/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
+                - aws s3 cp --recursive --exclude "*" --include "connect-json-6.1.0-0-ccs.jar" json/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
+                - aws s3 cp --recursive --exclude "*" --include "connect-transforms-6.1.0-0-ccs.jar" transforms/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/ && cd ../..
+                - cd schema-registry/json-schema-converter && aws s3 cp --recursive --exclude "*" --include "kafka-connect-json-schema-converter-5.5.1.jar" target/ s3://ais-$STAGE-kafka-connect-jdbc && cd ../..
                 - docker push $IMAGE_URL
       Tags:
         - {Key: tenant, Value: platform}

@@ -26,8 +26,21 @@ RUN echo "===> Collection Simple JSON" \
 
 RUN echo "===> Updating JDBC jar" \
   && rm -rf /usr/share/java/kafka-connect-jdbc/kafka-connect-jdbc-5.5.1.jar \
-  && rm -rf /usr/share/java/kafka-connect-s3/kafka-connect-s3-5.5.1.jar
+  && rm -rf /usr/share/java/kafka-connect-s3/kafka-connect-s3-5.5.1.jar \
+  && rm -rf /usr/share/java/kafka/connect-api-5.5.1-ce.jar \
+  && rm -rf /usr/share/java/kafka/connect-json-5.5.1-ce.jar \
+  && rm -rf /usr/share/java/kafka/connect-transforms-5.5.1-ce.jar
 
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
 COPY ./kafka-connect-storage-cloud/kafka-connect-s3/target/kafka-connect-s3-5.5.1.jar /usr/share/java/kafka-connect-s3/
+
+COPY ./kafka/connect/api/build/libs/connect-api-6.1.0-0-ccs.jar /usr/share/java/kafka/
+
+COPY ./kafka/connect/api/build/libs/connect-json-6.1.0-0-ccs.jar /usr/share/java/kafka
+
+COPY ./kafka/connect/api/build/libs/connect-transforms-6.1.0-0-ccs.jar /usr/share/java/kafka/
+
+COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
+
+COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-s3/storage-common/
