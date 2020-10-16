@@ -37,9 +37,9 @@ COPY ./kafka-connect-storage-cloud/kafka-connect-s3/target/kafka-connect-s3-5.5.
 
 COPY ./kafka/connect/api/build/libs/connect-api-6.2.0-0-ccs.jar /usr/share/java/kafka/
 
-COPY ./kafka/connect/api/build/libs/connect-json-6.2.0-0-ccs.jar /usr/share/java/kafka
+COPY ./kafka/connect/json/build/libs/connect-json-6.2.0-0-ccs.jar /usr/share/java/kafka
 
-COPY ./kafka/connect/api/build/libs/connect-transforms-6.2.0-0-ccs.jar /usr/share/java/kafka/
+COPY ./kafka/connect/transforms/build/libs/connect-transforms-6.2.0-0-ccs.jar /usr/share/java/kafka/
 
 COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
