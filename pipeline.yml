@@ -283,16 +283,16 @@ Resources:
             build:
               commands:
                 - echo Build started on `date`
-                - git clone -b $KAFKA_CONNECT_S3_BRANCH https://$GIT_TOKEN@github.com/PeakBI/kafka-connect-storage-cloud.git
-                - ls && cd kafka-connect-storage-cloud
-                - mvn install -D maven.test.skip=true
-                - cd .. && git clone -b $KAFKA_BRANCH https://$GIT_TOKEN@github.com:PeakBI/kafka.git
+                - git clone -b $KAFKA_BRANCH https://$GIT_TOKEN@github.com/PeakBI/kafka.git
                 - cd kafka
                 - ./gradlew jar
-                - cd .. && git clone -b $JSON_SCHEMA_CONVERTER_BRANCH https://$GIT_TOKEN@github.com:PeakBI/schema-registry.git
+                - cd .. && git clone -b $JSON_SCHEMA_CONVERTER_BRANCH https://$GIT_TOKEN@github.com/PeakBI/schema-registry.git
                 - cd schema-registry/json-schema-converter
                 - mvn install -D maven.test.skip=true
-                - cd ../../ && mvn install -D maven.test.skip=true
+                - cd ../.. && git clone -b $KAFKA_CONNECT_S3_BRANCH https://$GIT_TOKEN@github.com/PeakBI/kafka-connect-storage-cloud.git
+                - ls && cd kafka-connect-storage-cloud
+                - mvn install -D maven.test.skip=true
+                - cd .. && mvn install -D maven.test.skip=true
                 - docker build . --tag $IMAGE_URL:$STAGE
             post_build:
               commands:
