@@ -299,9 +299,9 @@ Resources:
                 - echo Build completed on `date`
                 - aws s3 cp --recursive --exclude "*" --include "kafka-connect-jdbc-5.5.1.jar" target/ s3://ais-$STAGE-kafka-connect-jdbc/
                 - cd kafka-connect-storage-cloud && aws s3 cp --recursive --exclude "*" --include "kafka-connect-s3-5.5.1.jar" kafka-connect-s3/target/ s3://ais-$STAGE-kafka-connect-jdbc/ && cd ..
-                - cd kafka/connect && aws s3 cp --recursive --exclude "*" --include "connect-api-6.1.0-0-ccs.jar" api/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
-                - aws s3 cp --recursive --exclude "*" --include "connect-json-6.1.0-0-ccs.jar" json/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
-                - aws s3 cp --recursive --exclude "*" --include "connect-transforms-6.1.0-0-ccs.jar" transforms/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/ && cd ../..
+                - cd kafka/connect && aws s3 cp --recursive --exclude "*" --include "connect-api-6.2.0-0-ccs.jar" api/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
+                - aws s3 cp --recursive --exclude "*" --include "connect-json-6.2.0-0-ccs.jar" json/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/
+                - aws s3 cp --recursive --exclude "*" --include "connect-transforms-6.2.0-0-ccs.jar" transforms/build/libs/ s3://ais-$STAGE-kafka-connect-jdbc/ && cd ../..
                 - cd schema-registry/json-schema-converter && aws s3 cp --recursive --exclude "*" --include "kafka-connect-json-schema-converter-5.5.1.jar" target/ s3://ais-$STAGE-kafka-connect-jdbc && cd ../..
                 - docker push $IMAGE_URL
       Tags:
