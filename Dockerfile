@@ -44,3 +44,7 @@ COPY ./kafka/connect/transforms/build/libs/connect-transforms-6.2.0-0-ccs.jar /u
 COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
 COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-s3/storage-common/
+
+COPY /usr/share/java/kafka-serde-tools/kafka-json-schema-serializer-5.5.1.jar /usr/share/java/kafka-connect-s3/storage-common/
+
+COPY /usr/share/java/kafka-serde-tools/kafka-json-serializer-5.5.1.jar /usr/share/java/kafka-connect-s3/storage-common/
