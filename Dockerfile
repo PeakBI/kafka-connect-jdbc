@@ -33,6 +33,13 @@ RUN echo "===> Collecting JSON schema provider" \
 RUN echo "===> Collecting JSON serializer" \
   && wget -O /usr/share/java/kafka-connect-s3/storage-common/kafka-json-serializer-5.5.1.jar http://packages.confluent.io/maven/io/confluent/kafka-json-serializer/5.5.1/kafka-json-serializer-5.5.1.jar
 
+RUN echo "===> Collecting Jackson libs" \
+ && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-guava-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-guava/2.10.5/jackson-datatype-guava-2.10.5.jar \
+ && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-jdk8-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.10.5/jackson-datatype-jdk8-2.10.5.jar \
+ && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-joda-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.10.5/jackson-datatype-joda-2.10.5.jar \
+ && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-jsr310-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.10.5/jackson-datatype-jsr310-2.10.5.jar \
+ && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-module-parameter-names-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names/2.10.5/jackson-module-parameter-names-2.10.5.jar
+
 
 RUN echo "===> Updating JDBC jar" \
   && rm -rf /usr/share/java/kafka-connect-jdbc/kafka-connect-jdbc-5.5.1.jar \
