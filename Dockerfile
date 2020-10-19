@@ -39,7 +39,7 @@ RUN echo "===> Updating JDBC jar" \
   && rm -rf /usr/share/java/kafka-connect-s3/kafka-connect-s3-5.5.1.jar \
   && rm -rf /usr/share/java/kafka/connect-api-5.5.1-ccs.jar \
   && rm -rf /usr/share/java/kafka/connect-json-5.5.1-ccs.jar \
-  && rm -rf /usr/share/java/kafka/connect-transforms-5.5.1-ccs.jar
+  && rm -rf /usr/share/java/kafka/connect-transforms-5.5.1-ccs.jar \
   && rm -rf /usr/share/java/kafka-connect-s3/storage-common/kafka-schema-registry-client-5.5.1.jar
 
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
