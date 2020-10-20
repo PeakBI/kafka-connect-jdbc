@@ -24,43 +24,10 @@ RUN echo "===> Collecting AWS STS" \
 RUN echo "===> Collecting Simple JSON" \
   && wget -O /usr/share/java/kafka-connect-jdbc/json-simple-1.1.1.jar https://repo1.maven.org/maven2/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
 
-RUN echo "===> Collecting JSON schema serializer" \
-  && wget -O /usr/share/java/kafka-connect-s3/storage-common/kafka-json-schema-serializer-5.5.1.jar http://packages.confluent.io/maven/io/confluent/kafka-json-schema-serializer/5.5.1/kafka-json-schema-serializer-5.5.1.jar
-
-RUN echo "===> Collecting JSON schema provider" \
-  && wget -O /usr/share/java/kafka-connect-s3/storage-common/kafka-json-schema-provider-5.5.1.jar http://packages.confluent.io/maven/io/confluent/kafka-json-schema-provider/5.5.1/kafka-json-schema-provider-5.5.1.jar
-
-RUN echo "===> Collecting JSON serializer" \
-  && wget -O /usr/share/java/kafka-connect-s3/storage-common/kafka-json-serializer-5.5.1.jar http://packages.confluent.io/maven/io/confluent/kafka-json-serializer/5.5.1/kafka-json-serializer-5.5.1.jar
-
-RUN echo "===> Collecting Jackson libs" \
- && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-guava-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-guava/2.10.5/jackson-datatype-guava-2.10.5.jar \
- && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-jdk8-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jdk8/2.10.5/jackson-datatype-jdk8-2.10.5.jar \
- && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-joda-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.10.5/jackson-datatype-joda-2.10.5.jar \
- && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-datatype-jsr310-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/datatype/jackson-datatype-jsr310/2.10.5/jackson-datatype-jsr310-2.10.5.jar \
- && wget -O /usr/share/java/kafka-connect-s3/storage-common/jackson-module-parameter-names-2.10.5.jar https://repo1.maven.org/maven2/com/fasterxml/jackson/module/jackson-module-parameter-names/2.10.5/jackson-module-parameter-names-2.10.5.jar
-
-
 RUN echo "===> Updating JDBC jar" \
   && rm -rf /usr/share/java/kafka-connect-jdbc/kafka-connect-jdbc-5.5.1.jar \
   && rm -rf /usr/share/java/kafka-connect-s3/kafka-connect-s3-5.5.1.jar \
-  && rm -rf /usr/share/java/kafka/connect-api-5.5.1-ccs.jar \
-  && rm -rf /usr/share/java/kafka/connect-json-5.5.1-ccs.jar \
-  && rm -rf /usr/share/java/kafka/connect-transforms-5.5.1-ccs.jar \
-  && rm -rf /usr/share/java/kafka-connect-s3/storage-common/kafka-schema-registry-client-5.5.1.jar
 
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
 COPY ./kafka-connect-storage-cloud/kafka-connect-s3/target/kafka-connect-s3-5.5.1.jar /usr/share/java/kafka-connect-s3/
-
-COPY ./kafka/connect/api/build/libs/connect-api-6.2.0-0-ccs.jar /usr/share/java/kafka/
-
-COPY ./kafka/connect/json/build/libs/connect-json-6.2.0-0-ccs.jar /usr/share/java/kafka
-
-COPY ./kafka/connect/transforms/build/libs/connect-transforms-6.2.0-0-ccs.jar /usr/share/java/kafka/
-
-COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
-
-COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-connect-s3/storage-common/
-
-COPY ./schema-registry/json-schema-converter/target/kafka-connect-json-schema-converter-5.5.1.jar /usr/share/java/kafka-serder-tools/kafka-connect-json-schema-converter-5.5.1.jar
