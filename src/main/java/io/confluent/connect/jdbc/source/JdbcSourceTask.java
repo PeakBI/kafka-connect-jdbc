@@ -66,9 +66,11 @@ public class JdbcSourceTask extends SourceTask {
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final AtomicBoolean snsEventPushed = new AtomicBoolean(false);
+  private int resultSetCount;
 
   public JdbcSourceTask() {
     this.time = new SystemTime();
+    this.resultSetCount = 0;
   }
 
   public JdbcSourceTask(Time time) {
@@ -371,13 +373,13 @@ public class JdbcSourceTask extends SourceTask {
             payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
             payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
             payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
-
+            payload.put("publishedCount", Integer.toString(this.resultSetCount));
             JSONObject message = new JSONObject(payload);
             log.trace("Sending event to SNS topic {} {}", topicArn, payload.toString());
             new SNSClient(config).publish(topicArn, message.toJSONString());
             snsEventPushed.set(true);
           }
-
+          this.resultSetCount = 0;
           time.sleep(sleepMs);
           continue; // Re-check stop flag before continuing
         }
@@ -393,7 +395,7 @@ public class JdbcSourceTask extends SourceTask {
         while (results.size() < batchMaxRows && (hadNext = querier.next())) {
           results.add(querier.extractRecord());
         }
-
+        this.resultSetCount += results.size();
         if (!hadNext) {
           // If we finished processing the results from the current query, we can reset and send
           // the querier to the tail of the queue
