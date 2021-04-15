@@ -126,7 +126,7 @@ public class JdbcSourceTask extends SourceTask {
       List<Map<String, String>> partitions = new ArrayList<>(tables.size());
       switch (queryMode) {
         case TABLE:
-          log.trace("Starting in TABLE mode");
+          log.info("Starting in TABLE mode");
           for (String table : tables) {
             // Find possible partition maps for different offset protocols
             // We need to search by all offset protocol partition keys to support compatibility
@@ -136,7 +136,7 @@ public class JdbcSourceTask extends SourceTask {
           }
           break;
         case QUERY:
-          log.trace("Starting in QUERY mode");
+          log.info("Starting in QUERY mode");
           partitions.add(Collections.singletonMap(JdbcSourceConnectorConstants.QUERY_NAME_KEY,
                                                   JdbcSourceConnectorConstants.QUERY_NAME_VALUE));
           break;
@@ -144,7 +144,7 @@ public class JdbcSourceTask extends SourceTask {
           throw new ConnectException("Unknown query mode: " + queryMode);
       }
       offsets = context.offsetStorageReader().offsets(partitions);
-      log.trace("The partition offsets are {}", offsets);
+      log.info("The partition offsets are {}", offsets);
     }
 
     String incrementingColumn
@@ -346,7 +346,7 @@ public class JdbcSourceTask extends SourceTask {
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
-    log.trace("{} Polling for new data");
+    log.info("{} Polling for new data");
 
     while (running.get()) {
       final TableQuerier querier = tableQueue.peek();
@@ -356,9 +356,9 @@ public class JdbcSourceTask extends SourceTask {
         final long nextUpdate = querier.getLastUpdate()
             + config.getInt(JdbcSourceTaskConfig.POLL_INTERVAL_MS_CONFIG);
         final long now = time.milliseconds();
-        final long sleepMs = Math.min(nextUpdate - now, 10);
+        final long sleepMs = Math.min(nextUpdate - now, 100);
         if (sleepMs > 0) {
-          log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
+          log.info("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
 
           // send event to SNS topic
           String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
@@ -375,7 +375,7 @@ public class JdbcSourceTask extends SourceTask {
             payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
             payload.put("publishedCount", Integer.toString(this.resultSetCount));
             JSONObject message = new JSONObject(payload);
-            log.trace("Sending event to SNS topic {} {}", topicArn, payload.toString());
+            log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
             new SNSClient(config).publish(topicArn, message.toJSONString());
             snsEventPushed.set(true);
           }
@@ -387,7 +387,7 @@ public class JdbcSourceTask extends SourceTask {
 
       final List<SourceRecord> results = new ArrayList<>();
       try {
-        log.debug("Checking for next block of results from {}", querier.toString());
+        log.info("Checking for next block of results from {}", querier.toString());
         querier.maybeStartQuery(cachedConnectionProvider.getConnection());
 
         int batchMaxRows = config.getInt(JdbcSourceTaskConfig.BATCH_MAX_ROWS_CONFIG);
@@ -403,11 +403,11 @@ public class JdbcSourceTask extends SourceTask {
         }
 
         if (results.isEmpty()) {
-          log.trace("No updates for {}", querier.toString());
+          log.info("No updates for {}", querier.toString());
           continue;
         }
 
-        log.debug("Returning {} records for {}", results.size(), querier.toString());
+        log.info("Returning {} records for {}", results.size(), querier.toString());
         return results;
       } catch (SQLException sqle) {
         log.error("Failed to run query for table {}: {}", querier.toString(), sqle);
@@ -426,7 +426,7 @@ public class JdbcSourceTask extends SourceTask {
           payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
 
           JSONObject message = new JSONObject(payload);
-          log.trace("Sending event to SNS topic {} ", topicArn);
+          log.info("Sending event to SNS topic {} ", topicArn);
           new SNSClient(config).publish(topicArn, message.toJSONString());
         }
 

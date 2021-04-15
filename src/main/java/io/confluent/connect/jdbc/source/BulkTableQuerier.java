@@ -81,7 +81,10 @@ public class BulkTableQuerier extends TableQuerier {
 
   @Override
   public SourceRecord extractRecord() throws SQLException {
+    log.info("Extract record-bulk");
     Struct record = new Struct(schemaMapping.schema());
+    log.info("Record {}", record);
+    log.info("ResultSet {}", resultSet);
     for (FieldSetter setter : schemaMapping.fieldSetters()) {
       try {
         setter.setField(record, resultSet);
@@ -111,6 +114,7 @@ public class BulkTableQuerier extends TableQuerier {
       default:
         throw new ConnectException("Unexpected query mode: " + mode);
     }
+    log.info("Record after: {}", record);
     return new SourceRecord(partition, null, topic, record.schema(), record);
   }
 
