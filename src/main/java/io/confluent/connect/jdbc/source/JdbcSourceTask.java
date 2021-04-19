@@ -122,7 +122,8 @@ public class JdbcSourceTask extends SourceTask {
     Map<Map<String, String>, Map<String, Object>> offsets = null;
     if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)
         || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP)
-        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)) {
+        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)
+        || mode.equals(JdbcSourceTaskConfig.MODE_BULK)) {
       List<Map<String, String>> partitions = new ArrayList<>(tables.size());
       switch (queryMode) {
         case TABLE:
@@ -198,7 +199,7 @@ public class JdbcSourceTask extends SourceTask {
         }
       }
       offset = computeInitialOffset(tableOrQuery, offset, timeZone);
-
+      log.info("Initial offset computed {} ", offset);
       String topicPrefix = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
 
       if (mode.equals(JdbcSourceTaskConfig.MODE_BULK)) {
@@ -208,7 +209,9 @@ public class JdbcSourceTask extends SourceTask {
                 queryMode,
                 tableOrQuery,
                 topicPrefix,
-                suffix
+                suffix,
+                offset,
+                resultSetCount
             )
         );
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
@@ -358,7 +361,7 @@ public class JdbcSourceTask extends SourceTask {
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 100);
         if (sleepMs > 0) {
-          log.info("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
+          log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
 
           // send event to SNS topic
           String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
@@ -393,9 +396,13 @@ public class JdbcSourceTask extends SourceTask {
         int batchMaxRows = config.getInt(JdbcSourceTaskConfig.BATCH_MAX_ROWS_CONFIG);
         boolean hadNext = true;
         while (results.size() < batchMaxRows && (hadNext = querier.next())) {
-          results.add(querier.extractRecord());
+          this.resultSetCount++;
+          SourceRecord record = querier.extractRecord();
+          if (record != null) {
+            results.add(querier.extractRecord());
+          }
         }
-        this.resultSetCount += results.size();
+
         if (!hadNext) {
           // If we finished processing the results from the current query, we can reset and send
           // the querier to the tail of the queue

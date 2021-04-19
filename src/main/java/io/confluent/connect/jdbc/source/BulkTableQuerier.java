@@ -38,15 +38,21 @@ import io.confluent.connect.jdbc.util.ExpressionBuilder;
  */
 public class BulkTableQuerier extends TableQuerier {
   private static final Logger log = LoggerFactory.getLogger(BulkTableQuerier.class);
+  private BulkOffset offset;
+  private Integer recordCount;
 
   public BulkTableQuerier(
       DatabaseDialect dialect,
       QueryMode mode,
       String name,
       String topicPrefix,
-      String suffix
+      String suffix,
+      Map<String, Object> offsetMap,
+      Integer recordCount
   ) {
     super(dialect, mode, name, topicPrefix, suffix);
+    this.offset = BulkOffset.fromMap(offsetMap);
+    this.recordCount = recordCount;
   }
 
   @Override
@@ -81,10 +87,7 @@ public class BulkTableQuerier extends TableQuerier {
 
   @Override
   public SourceRecord extractRecord() throws SQLException {
-    log.info("Extract record-bulk");
     Struct record = new Struct(schemaMapping.schema());
-    log.info("Record {}", record);
-    log.info("ResultSet {}", resultSet);
     for (FieldSetter setter : schemaMapping.fieldSetters()) {
       try {
         setter.setField(record, resultSet);
@@ -115,7 +118,13 @@ public class BulkTableQuerier extends TableQuerier {
         throw new ConnectException("Unexpected query mode: " + mode);
     }
     log.info("Record after: {}", record);
-    return new SourceRecord(partition, null, topic, record.schema(), record);
+    recordCount++;
+    if (offset.getBulkOffset() != 0 && recordCount != offset.getBulkOffset()) {
+      return null;
+    }
+    offset = new BulkOffset(offset.getBulkOffset() + 1);
+    log.info("Offset {}, Record count {} ", offset.toMap(), recordCount);
+    return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
   }
 
   @Override

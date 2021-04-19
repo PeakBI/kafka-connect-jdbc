@@ -199,7 +199,7 @@ public class TimestampIncrementingTableQuerier extends TableQuerier implements C
       }
     }
     offset = criteria.extractValues(schemaMapping.schema(), record, offset);
-    log.info("offset: {}", offset);
+    log.info("offset: {}", offset.toMap());
     log.info("Record after {}", record);
     return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
   }
