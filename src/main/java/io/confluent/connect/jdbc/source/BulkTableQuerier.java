@@ -119,7 +119,7 @@ public class BulkTableQuerier extends TableQuerier {
     }
     log.info("Record after: {}", record);
     recordCount++;
-    if (offset.getBulkOffset() != 0 && recordCount != offset.getBulkOffset()) {
+    if (offset.getBulkOffset() != 0 && recordCount <= offset.getBulkOffset()) {
       return null;
     }
     offset = new BulkOffset(offset.getBulkOffset() + 1);
