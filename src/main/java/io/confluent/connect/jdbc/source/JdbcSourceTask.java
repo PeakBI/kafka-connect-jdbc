@@ -399,7 +399,7 @@ public class JdbcSourceTask extends SourceTask {
           this.resultSetCount++;
           SourceRecord record = querier.extractRecord();
           if (record != null) {
-            results.add(querier.extractRecord());
+            results.add(record);
           }
         }
 
