@@ -38,15 +38,20 @@ import io.confluent.connect.jdbc.util.ExpressionBuilder;
  */
 public class BulkTableQuerier extends TableQuerier {
   private static final Logger log = LoggerFactory.getLogger(BulkTableQuerier.class);
+  private BulkOffset offset;
+  private Integer recordCount;
 
   public BulkTableQuerier(
       DatabaseDialect dialect,
       QueryMode mode,
       String name,
       String topicPrefix,
-      String suffix
+      String suffix,
+      Map<String, Object> offsetMap
   ) {
     super(dialect, mode, name, topicPrefix, suffix);
+    this.offset = BulkOffset.fromMap(offsetMap);
+    this.recordCount = 0;
   }
 
   @Override
@@ -111,7 +116,14 @@ public class BulkTableQuerier extends TableQuerier {
       default:
         throw new ConnectException("Unexpected query mode: " + mode);
     }
-    return new SourceRecord(partition, null, topic, record.schema(), record);
+    log.info("Record after: {}", record);
+    recordCount++;
+    if (offset.getBulkOffset() != 0 && recordCount <= offset.getBulkOffset()) {
+      return null;
+    }
+    offset = new BulkOffset(offset.getBulkOffset() + 1);
+    log.info("Offset {}, Record count {} ", offset.toMap(), recordCount);
+    return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
   }
 
   @Override
