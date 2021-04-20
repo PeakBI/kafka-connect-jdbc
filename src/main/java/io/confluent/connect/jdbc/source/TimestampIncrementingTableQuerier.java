@@ -183,10 +183,7 @@ public class TimestampIncrementingTableQuerier extends TableQuerier implements C
 
   @Override
   public SourceRecord extractRecord() throws SQLException {
-    log.info("extract record - incrementing");
     Struct record = new Struct(schemaMapping.schema());
-    log.info("Record: {}", record);
-    log.info("Result set: {}", resultSet);
     for (FieldSetter setter : schemaMapping.fieldSetters()) {
       try {
         setter.setField(record, resultSet);
@@ -199,8 +196,6 @@ public class TimestampIncrementingTableQuerier extends TableQuerier implements C
       }
     }
     offset = criteria.extractValues(schemaMapping.schema(), record, offset);
-    log.info("offset: {}", offset.toMap());
-    log.info("Record after {}", record);
     return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
   }
 

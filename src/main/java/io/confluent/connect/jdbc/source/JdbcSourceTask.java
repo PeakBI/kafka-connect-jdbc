@@ -210,8 +210,7 @@ public class JdbcSourceTask extends SourceTask {
                 tableOrQuery,
                 topicPrefix,
                 suffix,
-                offset,
-                resultSetCount
+                offset
             )
         );
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
@@ -359,7 +358,7 @@ public class JdbcSourceTask extends SourceTask {
         final long nextUpdate = querier.getLastUpdate()
             + config.getInt(JdbcSourceTaskConfig.POLL_INTERVAL_MS_CONFIG);
         final long now = time.milliseconds();
-        final long sleepMs = Math.min(nextUpdate - now, 100);
+        final long sleepMs = Math.min(nextUpdate - now, 10);
         if (sleepMs > 0) {
           log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
 

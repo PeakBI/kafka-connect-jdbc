@@ -47,12 +47,11 @@ public class BulkTableQuerier extends TableQuerier {
       String name,
       String topicPrefix,
       String suffix,
-      Map<String, Object> offsetMap,
-      Integer recordCount
+      Map<String, Object> offsetMap
   ) {
     super(dialect, mode, name, topicPrefix, suffix);
     this.offset = BulkOffset.fromMap(offsetMap);
-    this.recordCount = recordCount;
+    this.recordCount = 0;
   }
 
   @Override

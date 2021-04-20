@@ -29,7 +29,7 @@ public class BulkOffset {
 
   /**
    * @param bulkOffset the bulk offset.
-   *                   If null, {@link #getBulkOffset()} will return -1.
+   *                   If null, {@link #getBulkOffset()} will return 0.
    */
   public BulkOffset(Long bulkOffset) {
     this.bulkOffset = bulkOffset;
