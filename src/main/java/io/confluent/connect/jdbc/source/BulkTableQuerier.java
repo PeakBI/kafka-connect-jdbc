@@ -121,7 +121,7 @@ public class BulkTableQuerier extends TableQuerier {
     if (offset.getBulkOffset() != 0 && recordCount <= offset.getBulkOffset()) {
       return null;
     }
-    offset = new BulkOffset(offset.getBulkOffset() + 1);
+    this.offset = new BulkOffset(offset.getBulkOffset() + 1);
     log.info("Offset {}, Record count {} ", offset.toMap(), recordCount);
     return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
   }
@@ -129,7 +129,7 @@ public class BulkTableQuerier extends TableQuerier {
   @Override
   public String toString() {
     return "BulkTableQuerier{" + "table='" + tableId + '\'' + ", query='" + query + '\''
-           + ", topicPrefix='" + topicPrefix + '\'' + '}';
+           + ", topicPrefix='" + topicPrefix + '\'' + ", offset='" + offset.toMap() + '\'' + "}";
   }
 
 }

@@ -352,6 +352,7 @@ public class JdbcSourceTask extends SourceTask {
 
     while (running.get()) {
       final TableQuerier querier = tableQueue.peek();
+      log.info("Querier from table queue: {} ", querier.toString());
 
       if (!querier.querying()) {
         // If not in the middle of an update, wait for next update time
@@ -456,7 +457,7 @@ public class JdbcSourceTask extends SourceTask {
   }
 
   private void resetAndRequeueHead(TableQuerier expectedHead) {
-    log.debug("Resetting querier {}", expectedHead.toString());
+    log.info("Resetting querier {}", expectedHead.toString());
     TableQuerier removedQuerier = tableQueue.poll();
     assert removedQuerier == expectedHead;
     expectedHead.reset(time.milliseconds());
