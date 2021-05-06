@@ -440,6 +440,25 @@ public class JdbcSourceTask extends SourceTask {
         resetAndRequeueHead(querier);
         return null;
       } catch (Throwable t) {
+        log.error("Failed to complete source task for table {}: {}", querier.toString(), t);
+        // send event to SNS topic
+        String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
+        if (!topicArn.equals("")) {
+          String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
+          topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
+          Map<String, String> payload = new HashMap<String, String>();
+          payload.put("status", "failure");
+          payload.put("error", t.getMessage());
+          payload.put("topic", topicName);
+          payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
+          payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
+          payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
+          payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
+
+          JSONObject message = new JSONObject(payload);
+          log.info("Sending event to SNS topic {} ", topicArn);
+          new SNSClient(config).publish(topicArn, message.toJSONString());
+        }
         resetAndRequeueHead(querier);
         // This task has failed, so close any resources (may be reopened if needed) before throwing
         closeResources();
