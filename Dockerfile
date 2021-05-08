@@ -1,6 +1,6 @@
 FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:5.5.1
 
-RUN apt-get install -y zip
+RUN apt-get update && apt-get install -y zip
 
 RUN echo "===> Installing MySQL connector" \
   && curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar  --output /usr/share/java/kafka-connect-jdbc/mysql-connector-java-8.0.19.jar
