@@ -144,6 +144,7 @@ public class JdbcSourceTask extends SourceTask {
         default:
           throw new ConnectException("Unknown query mode: " + queryMode);
       }
+      log.info("Partitions to fetch offsets {}", partitions.toString());
       offsets = context.offsetStorageReader().offsets(partitions);
       log.info("The partition offsets are {}", offsets);
     }
@@ -352,7 +353,8 @@ public class JdbcSourceTask extends SourceTask {
 
     while (running.get()) {
       final TableQuerier querier = tableQueue.peek();
-      log.info("Querier from table queue: {} ", querier.toString());
+      log.info("Querier from table queue: {} with last update: {} ", querier.toString(), 
+          querier.getLastUpdate());
 
       if (!querier.querying()) {
         // If not in the middle of an update, wait for next update time
@@ -406,6 +408,8 @@ public class JdbcSourceTask extends SourceTask {
         if (!hadNext) {
           // If we finished processing the results from the current query, we can reset and send
           // the querier to the tail of the queue
+          log.info("Finished processing results of the current query {}, " 
+              + "resetting tableQueue head", querier.toString());
           resetAndRequeueHead(querier);
         }
 
@@ -467,8 +471,11 @@ public class JdbcSourceTask extends SourceTask {
     }
 
     // Only in case of shutdown
+    log.info("Task is being shutdown, running : {}", running.get());
     final TableQuerier querier = tableQueue.peek();
     if (querier != null) {
+      log.info("Resetting table queue with querier {} with last update {}", 
+          querier.toString(), querier.getLastUpdate());
       resetAndRequeueHead(querier);
     }
     closeResources();

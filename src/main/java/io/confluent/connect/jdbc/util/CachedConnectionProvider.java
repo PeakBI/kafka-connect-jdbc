@@ -82,7 +82,7 @@ public class CachedConnectionProvider implements ConnectionProvider {
     try {
       return provider.isConnectionValid(connection, timeout);
     } catch (SQLException sqle) {
-      log.debug("Unable to check if the underlying connection is valid", sqle);
+      log.warn("Unable to check if the underlying connection is valid", sqle);
       return false;
     }
   }

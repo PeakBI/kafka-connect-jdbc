@@ -52,6 +52,7 @@ public class BulkTableQuerier extends TableQuerier {
     super(dialect, mode, name, topicPrefix, suffix);
     this.offset = BulkOffset.fromMap(offsetMap);
     this.recordCount = 0;
+    log.info("Initialized a bulk table querier: {}", this.toString());
   }
 
   @Override
@@ -75,12 +76,13 @@ public class BulkTableQuerier extends TableQuerier {
     String queryStr = builder.toString();
 
     recordQuery(queryStr);
-    log.debug("{} prepared SQL query: {}", this, queryStr);
+    log.info("{} prepared SQL query: {}", this, queryStr);
     stmt = dialect.createPreparedStatement(db, queryStr);
   }
 
   @Override
   protected ResultSet executeQuery() throws SQLException {
+    log.info("Executing query");
     return stmt.executeQuery();
   }
 
