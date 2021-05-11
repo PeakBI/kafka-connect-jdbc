@@ -2,6 +2,7 @@ FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:5.5.1
 
 RUN apt-get update && apt-get install -y zip
 
+RUN mkdir -p /usr/share/java/kafka-salesforce-connect
 RUN echo "===> Collecting Salesforce connector" \
   && curl -O https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-salesforce/versions/1.8.4/confluentinc-kafka-connect-salesforce-1.8.4.zip \
   && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip \
