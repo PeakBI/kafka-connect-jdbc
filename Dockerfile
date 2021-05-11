@@ -5,8 +5,9 @@ RUN apt-get update && apt-get install -y zip
 RUN mkdir -p /usr/share/java/kafka-salesforce-connect
 RUN echo "===> Collecting Salesforce connector" \
   && curl -O https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-salesforce/versions/1.8.4/confluentinc-kafka-connect-salesforce-1.8.4.zip \
-  && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip \
-  && mv lib /usr/share/java/kafka-salesforce-connect
+  && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip 
+
+RUN mv lib /usr/share/java/kafka-salesforce-connect
 
 RUN echo "===> Installing MySQL connector" \
   && curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar  --output /usr/share/java/kafka-connect-jdbc/mysql-connector-java-8.0.19.jar
