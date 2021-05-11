@@ -1041,7 +1041,7 @@ public class JdbcSourceConnectorConfig extends AbstractConfig {
     public List<Object> validValues(String name, Map<String, Object> config) {
       List<Object> results = cachedValues.get().cachedValue(config, time.milliseconds());
       if (results != null) {
-        LOG.debug("Returning cached table names: {}", results);
+        LOG.info("Returning cached table names: {}", results);
         return results;
       }
       LOG.trace("Fetching table names");

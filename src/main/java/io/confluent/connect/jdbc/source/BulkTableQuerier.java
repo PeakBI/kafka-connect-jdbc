@@ -52,6 +52,7 @@ public class BulkTableQuerier extends TableQuerier {
     super(dialect, mode, name, topicPrefix, suffix);
     this.offset = BulkOffset.fromMap(offsetMap);
     this.recordCount = 0;
+    log.info("Initialized a bulk table querier: {}", this.toString());
   }
 
   @Override
@@ -75,12 +76,13 @@ public class BulkTableQuerier extends TableQuerier {
     String queryStr = builder.toString();
 
     recordQuery(queryStr);
-    log.debug("{} prepared SQL query: {}", this, queryStr);
+    log.info("{} prepared SQL query: {}", this, queryStr);
     stmt = dialect.createPreparedStatement(db, queryStr);
   }
 
   @Override
   protected ResultSet executeQuery() throws SQLException {
+    log.info("Executing query");
     return stmt.executeQuery();
   }
 
@@ -117,19 +119,20 @@ public class BulkTableQuerier extends TableQuerier {
         throw new ConnectException("Unexpected query mode: " + mode);
     }
     log.info("Record after: {}", record);
-    recordCount++;
-    if (offset.getBulkOffset() != 0 && recordCount <= offset.getBulkOffset()) {
+    this.recordCount++;
+    if (this.offset.getBulkOffset() != 0 && this.recordCount <= this.offset.getBulkOffset()) {
       return null;
     }
-    offset = new BulkOffset(offset.getBulkOffset() + 1);
-    log.info("Offset {}, Record count {} ", offset.toMap(), recordCount);
-    return new SourceRecord(partition, offset.toMap(), topic, record.schema(), record);
+    this.offset = new BulkOffset(offset.getBulkOffset() + 1);
+    log.info("Offset {}, Record count {} ", this.offset.toMap(), this.recordCount);
+    return new SourceRecord(partition, this.offset.toMap(), topic, record.schema(), record);
   }
 
   @Override
   public String toString() {
     return "BulkTableQuerier{" + "table='" + tableId + '\'' + ", query='" + query + '\''
-           + ", topicPrefix='" + topicPrefix + '\'' + '}';
+           + ", topicPrefix='" + topicPrefix + '\'' + ", offset='" 
+           + this.offset.toMap() + '\'' + "}";
   }
 
 }

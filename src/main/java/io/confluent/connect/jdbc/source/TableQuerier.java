@@ -79,6 +79,7 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
 
   public PreparedStatement getOrCreatePreparedStatement(Connection db) throws SQLException {
     if (stmt != null) {
+      log.info("Entered getOrCreatePreparedStatement stmt not null condition");
       return stmt;
     }
     createPreparedStatement(db);
@@ -93,6 +94,7 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
 
   public void maybeStartQuery(Connection db) throws SQLException {
     if (resultSet == null) {
+      log.info("Entered maybeStartQuery result set null condition");
       this.db = db;
       stmt = getOrCreatePreparedStatement(db);
       resultSet = executeQuery();
@@ -136,6 +138,7 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
         stmt.close();
       } catch (SQLException ignored) {
         // intentionally ignored
+        log.error("Failed to close statement {}", ignored);
       }
     }
     stmt = null;
@@ -147,6 +150,7 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
         resultSet.close();
       } catch (SQLException ignored) {
         // intentionally ignored
+        log.error("Failed to close result set {}", ignored);
       }
     }
     resultSet = null;

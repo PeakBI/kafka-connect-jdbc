@@ -141,7 +141,7 @@ public class JdbcSourceConnector extends SourceConnector {
       Map<String, String> taskProps = new HashMap<>(configProperties);
       taskProps.put(JdbcSourceTaskConfig.TABLES_CONFIG, "");
       taskConfigs = Collections.singletonList(taskProps);
-      log.trace("Producing task configs with custom query");
+      log.info("Producing task configs with custom query");
       return taskConfigs;
     } else {
       List<TableId> currentTables = tableMonitorThread.tables();
