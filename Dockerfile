@@ -2,6 +2,11 @@ FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:5.5.1
 
 RUN apt-get update && apt-get install -y zip
 
+RUN echo "===> Collecting Salesforce connector" \
+  && curl -O https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-salesforce/versions/1.8.4/confluentinc-kafka-connect-salesforce-1.8.4.zip \
+  && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip \
+  && mv lib /usr/share/java/kafka-salesforce-connect
+
 RUN echo "===> Installing MySQL connector" \
   && curl https://repo1.maven.org/maven2/mysql/mysql-connector-java/8.0.19/mysql-connector-java-8.0.19.jar  --output /usr/share/java/kafka-connect-jdbc/mysql-connector-java-8.0.19.jar
 
@@ -31,11 +36,6 @@ RUN echo "===> Collecting AWS STS" \
 
 RUN echo "===> Collecting Simple JSON" \
   && wget -O /usr/share/java/kafka-connect-jdbc/json-simple-1.1.1.jar https://repo1.maven.org/maven2/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
-
-RUN echo "===> Collecting Salesforce connector" \ 
-  && curl -O https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-salesforce/versions/1.8.4/confluentinc-kafka-connect-salesforce-1.8.4.zip \
-  && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip \
-  && mv lib /usr/share/java/kafka-salesforce-connect
 
 RUN echo "===> Updating JDBC jar" \
   && rm -rf /usr/share/java/kafka-connect-jdbc/kafka-connect-jdbc-5.5.1.jar \
