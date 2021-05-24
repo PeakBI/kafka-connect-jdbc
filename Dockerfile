@@ -21,6 +21,9 @@ RUN echo "===> Installing SQL Server connector" \
 RUN echo "===> Installing Redshift connector" \
   && wget https://s3.amazonaws.com/redshift-downloads/drivers/jdbc/1.2.43.1067/RedshiftJDBC4-no-awssdk-1.2.43.1067.jar -O /usr/share/java/kafka-connect-jdbc/RedshiftJDBC4-no-awssdk-1.2.43.1067.jar
 
+RUN echo "====> Installing Snowflake connector" \
+ && wget https://repo1.maven.org/maven2/net/snowflake/snowflake-jdbc/3.13.3/snowflake-jdbc-3.13.3.jar -O /usr/share/java/kafka-connect-jdbc/snowflake-jdbc-3.13.3.jar
+
 RUN echo "===> Collecting Jsch" \
   && wget -O /usr/share/java/kafka-connect-jdbc/jsch-0.1.51.jar https://repo1.maven.org/maven2/com/jcraft/jsch/0.1.55/jsch-0.1.55.jar
 
