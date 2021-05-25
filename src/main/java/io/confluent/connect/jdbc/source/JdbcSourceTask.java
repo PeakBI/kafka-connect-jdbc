@@ -360,14 +360,15 @@ public class JdbcSourceTask extends SourceTask {
           querier.getLastUpdate());
 
       if (!querier.querying()) {
-        queryProcessed.set(true);
-        running.set(false);
         // If not in the middle of an update, wait for next update time
         final long nextUpdate = querier.getLastUpdate()
             + config.getInt(JdbcSourceTaskConfig.POLL_INTERVAL_MS_CONFIG);
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 10);
         if (sleepMs > 0) {
+          log.info("Query result processed. Setting queryProcessed to true and running to false");
+          queryProcessed.set(true);
+          running.set(false);
           log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
           time.sleep(sleepMs);
           continue; // Re-check stop flag before continuing
