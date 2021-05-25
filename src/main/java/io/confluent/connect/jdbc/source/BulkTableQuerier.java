@@ -38,20 +38,15 @@ import io.confluent.connect.jdbc.util.ExpressionBuilder;
  */
 public class BulkTableQuerier extends TableQuerier {
   private static final Logger log = LoggerFactory.getLogger(BulkTableQuerier.class);
-  private BulkOffset offset;
-  private Integer recordCount;
 
   public BulkTableQuerier(
       DatabaseDialect dialect,
       QueryMode mode,
       String name,
       String topicPrefix,
-      String suffix,
-      Map<String, Object> offsetMap
+      String suffix
   ) {
     super(dialect, mode, name, topicPrefix, suffix);
-    this.offset = BulkOffset.fromMap(offsetMap);
-    this.recordCount = 0;
     log.info("Initialized a bulk table querier: {}", this.toString());
   }
 
@@ -119,20 +114,13 @@ public class BulkTableQuerier extends TableQuerier {
         throw new ConnectException("Unexpected query mode: " + mode);
     }
     log.info("Record after: {}", record);
-    this.recordCount++;
-    if (this.offset.getBulkOffset() != 0 && this.recordCount <= this.offset.getBulkOffset()) {
-      return null;
-    }
-    this.offset = new BulkOffset(offset.getBulkOffset() + 1);
-    log.info("Offset {}, Record count {} ", this.offset.toMap(), this.recordCount);
-    return new SourceRecord(partition, this.offset.toMap(), topic, record.schema(), record);
+    return new SourceRecord(partition, null, topic, record.schema(), record);
   }
 
   @Override
   public String toString() {
     return "BulkTableQuerier{" + "table='" + tableId + '\'' + ", query='" + query + '\''
-           + ", topicPrefix='" + topicPrefix + '\'' + ", offset='" 
-           + this.offset.toMap() + '\'' + "}";
+           + ", topicPrefix='" + topicPrefix + '\'' + "}";
   }
 
 }
