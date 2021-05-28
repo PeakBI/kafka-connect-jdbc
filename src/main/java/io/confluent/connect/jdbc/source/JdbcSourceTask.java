@@ -370,8 +370,6 @@ public class JdbcSourceTask extends SourceTask {
               + " Result set count: {}", this.resultSetCount);
           queryProcessed.set(true);
           running.set(false);
-          log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
-          time.sleep(sleepMs);
           continue; // Re-check stop flag before continuing
         }
       }
@@ -465,6 +463,31 @@ public class JdbcSourceTask extends SourceTask {
       resetAndRequeueHead(querier);
     }
     closeResources();
+
+    if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount) {
+      log.info("Query processed and records committed: {}, {}", this.committedRecordCount,
+          this.resultSetCount);
+      // the committedRecordCount may not be same as the topic offset as there are possibilities 
+      // of duplicates due to multiple start events for the task
+      // send success SNS event
+      String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
+      if (!topicArn.equals("") && !snsEventPushed.get()) {
+        String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
+        topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
+        Map<String, String> payload = new HashMap<String, String>();
+        payload.put("status", "success");
+        payload.put("topic", topicName);
+        payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
+        payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
+        payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
+        payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
+        payload.put("publishedCount", Integer.toString(this.resultSetCount));
+        JSONObject message = new JSONObject(payload);
+        log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
+        new SNSClient(config).publish(topicArn, message.toJSONString());
+        snsEventPushed.set(true);
+      }
+    }
     return null;
   }
 
@@ -551,29 +574,5 @@ public class JdbcSourceTask extends SourceTask {
     }
     log.info("Commit record {}, {}, {}", record, metadata.toString(), committedRecordCount);
     commitRecord(record);
-    if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount) {
-      log.info("Query processed and records committed: {}, {}", this.committedRecordCount, 
-          this.resultSetCount);
-      // the committedRecordCount may not be same as the topic offset as there are possibilities of 
-      // duplicates due to multiple start events for the task
-      // send success SNS event
-      String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
-      if (!topicArn.equals("") && !snsEventPushed.get()) {
-        String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
-        topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
-        Map<String, String> payload = new HashMap<String, String>();
-        payload.put("status", "success");
-        payload.put("topic", topicName);
-        payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
-        payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
-        payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
-        payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
-        payload.put("publishedCount", Integer.toString(this.resultSetCount));
-        JSONObject message = new JSONObject(payload);
-        log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
-        new SNSClient(config).publish(topicArn, message.toJSONString());
-        snsEventPushed.set(true);
-      }
-    }
   }
 }
