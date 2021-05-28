@@ -366,7 +366,8 @@ public class JdbcSourceTask extends SourceTask {
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 10);
         if (sleepMs > 0) {
-          log.info("Query result processed. Setting queryProcessed to true and running to false");
+          log.info("Query result processed. Setting queryProcessed to true and running to false."
+              + " Result set count: {}", this.resultSetCount);
           queryProcessed.set(true);
           running.set(false);
           log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
@@ -545,13 +546,15 @@ public class JdbcSourceTask extends SourceTask {
   public void commitRecord(SourceRecord record, RecordMetadata metadata)
       throws InterruptedException {
     // by default, just call other method for backwards compatibility
-    log.info("Commit record {}, {}", record, metadata.toString());
     if (metadata != null) {
       this.committedRecordCount++;
     }
+    log.info("Commit record {}, {}, {}", record, metadata.toString(), committedRecordCount);
     commitRecord(record);
     if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount) {
-      // the committedRecordCount may not be same as the topic as there are possibilities of 
+      log.info("Query processed and records committed: {}, {}", this.committedRecordCount, 
+          this.resultSetCount);
+      // the committedRecordCount may not be same as the topic offset as there are possibilities of 
       // duplicates due to multiple start events for the task
       // send success SNS event
       String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
