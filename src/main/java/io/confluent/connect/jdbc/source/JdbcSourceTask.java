@@ -366,10 +366,7 @@ public class JdbcSourceTask extends SourceTask {
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 10);
         if (sleepMs > 0) {
-          log.info("Query result processed. Setting queryProcessed to true and running to false."
-              + " Result set count: {}", this.resultSetCount);
-          queryProcessed.set(true);
-          running.set(false);
+          time.sleep(sleepMs);
           continue; // Re-check stop flag before continuing
         }
       }
@@ -395,6 +392,10 @@ public class JdbcSourceTask extends SourceTask {
           log.info("Finished processing results of the current query {}, " 
               + "resetting tableQueue head", querier.toString());
           resetAndRequeueHead(querier);
+          log.info("Setting queryProcessed to true and running to false."
+              + " Result set count: {}", this.resultSetCount);
+          queryProcessed.set(true);
+          running.set(false);
         }
 
         if (results.isEmpty()) {
@@ -402,7 +403,8 @@ public class JdbcSourceTask extends SourceTask {
           continue;
         }
 
-        log.info("Returning {} records for {}", results.size(), querier.toString());
+        log.info("Returning {} records for {}, committed record count {}", results.size(),
+            querier.toString(), this.committedRecordCount);
         return results;
       } catch (SQLException sqle) {
         log.error("Failed to run query for table {}: {}", querier.toString(), sqle);
@@ -464,14 +466,15 @@ public class JdbcSourceTask extends SourceTask {
     }
     closeResources();
 
-    if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount) {
+    if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount
+          && !snsEventPushed.get()) {
       log.info("Query processed and records committed: {}, {}", this.committedRecordCount,
           this.resultSetCount);
       // the committedRecordCount may not be same as the topic offset as there are possibilities 
       // of duplicates due to multiple start events for the task
       // send success SNS event
       String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
-      if (!topicArn.equals("") && !snsEventPushed.get()) {
+      if (!topicArn.equals("")) {
         String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
         topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
         Map<String, String> payload = new HashMap<String, String>();
@@ -572,7 +575,6 @@ public class JdbcSourceTask extends SourceTask {
     if (metadata != null) {
       this.committedRecordCount++;
     }
-    log.info("Commit record {}, {}, {}", record, metadata.toString(), committedRecordCount);
     commitRecord(record);
   }
 }
