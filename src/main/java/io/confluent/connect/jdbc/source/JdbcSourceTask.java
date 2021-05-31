@@ -385,6 +385,8 @@ public class JdbcSourceTask extends SourceTask {
           SourceRecord record = querier.extractRecord();
           if (record != null) {
             results.add(record);
+          } else {
+            this.committedRecordCount++;
           }
         }
 
