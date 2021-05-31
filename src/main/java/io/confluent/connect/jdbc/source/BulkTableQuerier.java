@@ -123,7 +123,6 @@ public class BulkTableQuerier extends TableQuerier {
       return null;
     }
     this.offset = new BulkOffset(offset.getBulkOffset() + 1);
-    log.info("Offset {}, Record count {} ", this.offset.toMap(), this.recordCount);
     return new SourceRecord(partition, this.offset.toMap(), topic, record.schema(), record);
   }
 
