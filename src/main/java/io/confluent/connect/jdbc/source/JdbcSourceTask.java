@@ -127,7 +127,8 @@ public class JdbcSourceTask extends SourceTask {
     Map<Map<String, String>, Map<String, Object>> offsets = null;
     if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)
         || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP)
-        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)) {
+        || mode.equals(JdbcSourceTaskConfig.MODE_TIMESTAMP_INCREMENTING)
+        || mode.equals(JdbcSourceTaskConfig.MODE_BULK)) {
       List<Map<String, String>> partitions = new ArrayList<>(tables.size());
       switch (queryMode) {
         case TABLE:
@@ -214,7 +215,8 @@ public class JdbcSourceTask extends SourceTask {
                 queryMode,
                 tableOrQuery,
                 topicPrefix,
-                suffix
+                suffix,
+                offset
             )
         );
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
