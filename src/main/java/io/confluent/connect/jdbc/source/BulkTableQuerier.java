@@ -118,20 +118,18 @@ public class BulkTableQuerier extends TableQuerier {
       default:
         throw new ConnectException("Unexpected query mode: " + mode);
     }
-    log.info("Record after: {}", record);
     this.recordCount++;
     if (this.offset.getBulkOffset() != 0 && this.recordCount <= this.offset.getBulkOffset()) {
       return null;
     }
     this.offset = new BulkOffset(offset.getBulkOffset() + 1);
-    log.info("Offset {}, Record count {} ", this.offset.toMap(), this.recordCount);
     return new SourceRecord(partition, this.offset.toMap(), topic, record.schema(), record);
   }
 
   @Override
   public String toString() {
     return "BulkTableQuerier{" + "table='" + tableId + '\'' + ", query='" + query + '\''
-           + ", topicPrefix='" + topicPrefix + '\'' + ", offset='" 
+           + ", topicPrefix='" + topicPrefix + '\'' + ", offset='"
            + this.offset.toMap() + '\'' + "}";
   }
 

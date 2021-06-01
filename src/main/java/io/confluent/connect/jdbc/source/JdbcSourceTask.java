@@ -16,6 +16,8 @@
 package io.confluent.connect.jdbc.source;
 
 import java.util.TimeZone;
+
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.utils.SystemTime;
 import org.apache.kafka.common.utils.Time;
@@ -66,11 +68,14 @@ public class JdbcSourceTask extends SourceTask {
   private PriorityQueue<TableQuerier> tableQueue = new PriorityQueue<TableQuerier>();
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final AtomicBoolean snsEventPushed = new AtomicBoolean(false);
+  private final AtomicBoolean queryProcessed = new AtomicBoolean(false);
   private int resultSetCount;
+  private int committedRecordCount;
 
   public JdbcSourceTask() {
     this.time = new SystemTime();
     this.resultSetCount = 0;
+    this.committedRecordCount = 0;
   }
 
   public JdbcSourceTask(Time time) {
@@ -363,28 +368,6 @@ public class JdbcSourceTask extends SourceTask {
         final long now = time.milliseconds();
         final long sleepMs = Math.min(nextUpdate - now, 10);
         if (sleepMs > 0) {
-          log.trace("Waiting {} ms to poll {} next", nextUpdate - now, querier.toString());
-
-          // send event to SNS topic
-          String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
-
-          if (!topicArn.equals("") && !snsEventPushed.get()) {
-            String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
-            topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
-            Map<String, String> payload = new HashMap<String, String>();
-            payload.put("status", "success");
-            payload.put("topic", topicName);
-            payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
-            payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
-            payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
-            payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
-            payload.put("publishedCount", Integer.toString(this.resultSetCount));
-            JSONObject message = new JSONObject(payload);
-            log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
-            new SNSClient(config).publish(topicArn, message.toJSONString());
-            snsEventPushed.set(true);
-          }
-          this.resultSetCount = 0;
           time.sleep(sleepMs);
           continue; // Re-check stop flag before continuing
         }
@@ -397,11 +380,13 @@ public class JdbcSourceTask extends SourceTask {
 
         int batchMaxRows = config.getInt(JdbcSourceTaskConfig.BATCH_MAX_ROWS_CONFIG);
         boolean hadNext = true;
-        while (results.size() < batchMaxRows && (hadNext = querier.next())) {
+        while (results.size() < batchMaxRows && (hadNext = querier.next()) && running.get()) {
           this.resultSetCount++;
           SourceRecord record = querier.extractRecord();
           if (record != null) {
             results.add(record);
+          } else {
+            this.committedRecordCount++;
           }
         }
 
@@ -411,6 +396,10 @@ public class JdbcSourceTask extends SourceTask {
           log.info("Finished processing results of the current query {}, " 
               + "resetting tableQueue head", querier.toString());
           resetAndRequeueHead(querier);
+          log.info("Setting queryProcessed to true and running to false."
+              + " Result set count: {}", this.resultSetCount);
+          queryProcessed.set(true);
+          running.set(false);
         }
 
         if (results.isEmpty()) {
@@ -418,7 +407,8 @@ public class JdbcSourceTask extends SourceTask {
           continue;
         }
 
-        log.info("Returning {} records for {}", results.size(), querier.toString());
+        log.info("Returning {} records for {}, committed record count {}", results.size(),
+            querier.toString(), this.committedRecordCount);
         return results;
       } catch (SQLException sqle) {
         log.error("Failed to run query for table {}: {}", querier.toString(), sqle);
@@ -479,6 +469,32 @@ public class JdbcSourceTask extends SourceTask {
       resetAndRequeueHead(querier);
     }
     closeResources();
+
+    if (this.queryProcessed.get() && this.committedRecordCount >= this.resultSetCount
+          && !snsEventPushed.get()) {
+      log.info("Query processed and records committed: {}, {}", this.committedRecordCount,
+          this.resultSetCount);
+      // the committedRecordCount may not be same as the topic offset as there are possibilities 
+      // of duplicates due to multiple start events for the task
+      // send success SNS event
+      String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
+      if (!topicArn.equals("")) {
+        String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
+        topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
+        Map<String, String> payload = new HashMap<String, String>();
+        payload.put("status", "success");
+        payload.put("topic", topicName);
+        payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
+        payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
+        payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
+        payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
+        payload.put("publishedCount", Integer.toString(this.resultSetCount));
+        JSONObject message = new JSONObject(payload);
+        log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
+        new SNSClient(config).publish(topicArn, message.toJSONString());
+        snsEventPushed.set(true);
+      }
+    }
     return null;
   }
 
@@ -545,5 +561,24 @@ public class JdbcSourceTask extends SourceTask {
       throw new ConnectException("Failed trying to validate that columns used for offsets are NOT"
                                  + " NULL", e);
     }
+  }
+
+  public void commit() throws InterruptedException {
+    // This space intentionally left blank.
+    log.info("Committed offsets");
+  }
+
+  @Deprecated
+  public void commitRecord(SourceRecord record) throws InterruptedException {
+    // This space intentionally left blank.
+  }
+
+  public void commitRecord(SourceRecord record, RecordMetadata metadata)
+      throws InterruptedException {
+    // by default, just call other method for backwards compatibility
+    if (metadata != null) {
+      this.committedRecordCount++;
+    }
+    commitRecord(record);
   }
 }
