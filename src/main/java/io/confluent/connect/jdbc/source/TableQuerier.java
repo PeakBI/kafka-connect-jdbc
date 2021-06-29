@@ -83,8 +83,6 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
     return new HashMap<String, Object>();
   }
 
-  protected void setEventPushed() {}
-
   public PreparedStatement getOrCreatePreparedStatement(Connection db) throws SQLException {
     if (stmt != null) {
       log.info("Entered getOrCreatePreparedStatement stmt not null condition");

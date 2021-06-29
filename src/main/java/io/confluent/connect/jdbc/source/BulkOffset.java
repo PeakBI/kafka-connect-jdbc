@@ -15,59 +15,54 @@
 
 package io.confluent.connect.jdbc.source;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BulkOffset {
-  private static final Logger log = LoggerFactory.getLogger(JdbcSourceTask.class);
   static final String BULK_FIELD = "bulk";
-  static final String EVENT_PUSHED = "event_pushed";
+  static final String EVENT_FIELD = "event";
 
   private final Long bulkOffset;
-  private final AtomicBoolean snsEventPushed = new AtomicBoolean(false);
+  private final Boolean eventPushed;
 
   /**
    * @param bulkOffset the bulk offset.
    *                   If null, {@link #getBulkOffset()} will return 0.
+   * @param eventPushed the event pushed status offset.
+   *                    If null, {@link #isEventPushed()} will false.
    */
-  public BulkOffset(Long bulkOffset, Boolean snsEventPushed) {
+  public BulkOffset(Long bulkOffset, Boolean eventPushed) {
     this.bulkOffset = bulkOffset;
-    this.snsEventPushed.set(snsEventPushed);
+    this.eventPushed = eventPushed;
   }
 
   public long getBulkOffset() {
     return bulkOffset == null ? 0 : bulkOffset;
   }
 
-  public boolean isSnsEventPushed() {
-    return snsEventPushed.get();
-  }
-
-  public void setEventPushed() {
-    this.snsEventPushed.set(true);
+  public Boolean isEventPushed() {
+    return eventPushed == null ? false : eventPushed;
   }
 
   public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>(3);
+    Map<String, Object> map = new HashMap<>(2);
     if (bulkOffset != null) {
       map.put(BULK_FIELD, bulkOffset);
-      map.put(EVENT_PUSHED, snsEventPushed);
+    }
+    if (eventPushed != null) {
+      map.put(EVENT_FIELD, eventPushed);
     }
     return map;
   }
 
   public static BulkOffset fromMap(Map<String, ?> map) {
     if (map == null || map.isEmpty()) {
-      return new BulkOffset(null, false);
+      return new BulkOffset(null, null);
     }
 
-    Long incr = (Long) map.get(BULK_FIELD);
-    Boolean snsEventPushed = (Boolean) map.get(EVENT_PUSHED);
-    return new BulkOffset(incr, snsEventPushed);
+    Long offset = (Long) map.get(BULK_FIELD);
+    Boolean eventPushed = (Boolean) map.get(EVENT_FIELD);
+    return new BulkOffset(offset, eventPushed);
   }
 
   @Override
@@ -81,14 +76,21 @@ public class BulkOffset {
 
     BulkOffset that = (BulkOffset) o;
 
-    return bulkOffset != null
-        ? bulkOffset.equals(that.bulkOffset)
-        : that.bulkOffset == null;
+    if (bulkOffset != null
+        ? !bulkOffset.equals(that.bulkOffset)
+        : that.bulkOffset != null) {
+      return false;
+    }
+    return eventPushed != null
+           ? eventPushed.equals(that.eventPushed)
+           : that.eventPushed == null;
+
   }
 
   @Override
   public int hashCode() {
     int result = bulkOffset != null ? bulkOffset.hashCode() : 0;
+    result = 31 * result + (eventPushed != null ? eventPushed.hashCode() : 0);
     return result;
   }
 }

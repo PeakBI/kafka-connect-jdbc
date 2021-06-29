@@ -220,8 +220,8 @@ public class JdbcSourceTask extends SourceTask {
             )
         );
         // set snsEventPushed value from offset
-        if (offset != null && offset.get("event_pushed") != null) {
-          snsEventPushed.set((Boolean)offset.get("event_pushed"));
+        if (offset != null && offset.get("event") != null) {
+          snsEventPushed.set((Boolean)offset.get("event"));
         }
 
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
@@ -336,7 +336,7 @@ public class JdbcSourceTask extends SourceTask {
   }
 
   protected void closeResources() {
-    log.info("Closing resources for JDBC source task");
+    log.debug("Closing resources for JDBC source task");
     try {
       if (cachedConnectionProvider != null) {
         cachedConnectionProvider.close();
@@ -466,10 +466,10 @@ public class JdbcSourceTask extends SourceTask {
     }
 
     // Only in case of shutdown
-    log.info("Task is being shutdown, running : {}", running.get());
+    log.debug("Task is being shutdown, running : {}", running.get());
     final TableQuerier querier = tableQueue.peek();
     if (querier != null) {
-      log.info("Resetting table queue with querier {} with last update {}", 
+      log.debug("Resetting table queue with querier {} with last update {}",
           querier.toString(), querier.getLastUpdate());
       resetAndRequeueHead(querier);
     }
@@ -504,15 +504,17 @@ public class JdbcSourceTask extends SourceTask {
         new SNSClient(config).publish(topicArn, message.toJSONString());
         snsEventPushed.set(true);
         // set offset to snsEventPushed:true
-        querier.setEventPushed();
-        results.add(new SourceRecord(partition, querier.getOffset(), topicName, null, null));
+        Map<String, Object> currentOffset = querier.getOffset();
+        currentOffset.put("event", true);
+        results.add(new SourceRecord(partition, currentOffset, topicName, null, null));
+        return results;
       }
     }
     return null;
   }
 
   private void resetAndRequeueHead(TableQuerier expectedHead) {
-    log.info("Resetting querier {}", expectedHead.toString());
+    log.debug("Resetting querier {}", expectedHead.toString());
     TableQuerier removedQuerier = tableQueue.poll();
     assert removedQuerier == expectedHead;
     expectedHead.reset(time.milliseconds());

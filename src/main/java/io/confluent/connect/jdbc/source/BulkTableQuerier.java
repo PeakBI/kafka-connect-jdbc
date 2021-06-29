@@ -92,11 +92,6 @@ public class BulkTableQuerier extends TableQuerier {
   }
 
   @Override
-  protected void setEventPushed() {
-    this.offset.setEventPushed();
-  }
-
-  @Override
   public SourceRecord extractRecord() throws SQLException {
     Struct record = new Struct(schemaMapping.schema());
     for (FieldSetter setter : schemaMapping.fieldSetters()) {
