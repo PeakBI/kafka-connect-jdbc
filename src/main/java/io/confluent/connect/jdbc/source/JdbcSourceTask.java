@@ -219,6 +219,11 @@ public class JdbcSourceTask extends SourceTask {
                 offset
             )
         );
+        // set snsEventPushed value from offset
+        if (offset != null && offset.get("event_pushed") != null) {
+          snsEventPushed.set((Boolean)offset.get("event_pushed"));
+        }
+
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
         tableQueue.add(
             new TimestampIncrementingTableQuerier(
@@ -356,7 +361,7 @@ public class JdbcSourceTask extends SourceTask {
   public List<SourceRecord> poll() throws InterruptedException {
     log.info("{} Polling for new data");
 
-    while (running.get()) {
+    while (running.get() && !snsEventPushed.get()) {
       final TableQuerier querier = tableQueue.peek();
       log.info("Querier from table queue: {} with last update: {} ", querier.toString(), 
           querier.getLastUpdate());
@@ -479,6 +484,11 @@ public class JdbcSourceTask extends SourceTask {
       // send success SNS event
       String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
       if (!topicArn.equals("")) {
+        final List<SourceRecord> results = new ArrayList<>();
+        final Map<String, String> partition = Collections.singletonMap(
+            JdbcSourceConnectorConstants.QUERY_NAME_KEY,
+            JdbcSourceConnectorConstants.QUERY_NAME_VALUE
+        );
         String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
         topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
         Map<String, String> payload = new HashMap<String, String>();
@@ -493,6 +503,9 @@ public class JdbcSourceTask extends SourceTask {
         log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
         new SNSClient(config).publish(topicArn, message.toJSONString());
         snsEventPushed.set(true);
+        // set offset to snsEventPushed:true
+        querier.setEventPushed();
+        results.add(new SourceRecord(partition, querier.getOffset(), topicName, null, null));
       }
     }
     return null;
