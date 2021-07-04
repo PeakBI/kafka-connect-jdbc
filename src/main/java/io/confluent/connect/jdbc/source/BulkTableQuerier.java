@@ -87,11 +87,6 @@ public class BulkTableQuerier extends TableQuerier {
   }
 
   @Override
-  protected Map<String, Object> getOffset() {
-    return this.offset.toMap();
-  }
-
-  @Override
   public SourceRecord extractRecord() throws SQLException {
     Struct record = new Struct(schemaMapping.schema());
     for (FieldSetter setter : schemaMapping.fieldSetters()) {
@@ -127,7 +122,7 @@ public class BulkTableQuerier extends TableQuerier {
     if (this.offset.getBulkOffset() != 0 && this.recordCount <= this.offset.getBulkOffset()) {
       return null;
     }
-    this.offset = new BulkOffset(offset.getBulkOffset() + 1, false);
+    this.offset = new BulkOffset(offset.getBulkOffset() + 1);
     return new SourceRecord(partition, this.offset.toMap(), topic, record.schema(), record);
   }
 

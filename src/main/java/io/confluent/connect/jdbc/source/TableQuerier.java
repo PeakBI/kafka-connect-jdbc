@@ -23,8 +23,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Map;
 
 import io.confluent.connect.jdbc.dialect.DatabaseDialect;
 import io.confluent.connect.jdbc.util.ExpressionBuilder;
@@ -77,10 +75,6 @@ abstract class TableQuerier implements Comparable<TableQuerier> {
 
   public long getLastUpdate() {
     return lastUpdate;
-  }
-
-  protected Map<String, Object> getOffset() {
-    return new HashMap<String, Object>();
   }
 
   public PreparedStatement getOrCreatePreparedStatement(Connection db) throws SQLException {

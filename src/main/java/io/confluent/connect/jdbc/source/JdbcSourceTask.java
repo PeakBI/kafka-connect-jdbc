@@ -47,6 +47,7 @@ import io.confluent.connect.jdbc.dialect.DatabaseDialects;
 import io.confluent.connect.jdbc.util.CachedConnectionProvider;
 import io.confluent.connect.jdbc.util.ColumnDefinition;
 import io.confluent.connect.jdbc.util.ColumnId;
+import io.confluent.connect.jdbc.util.EventBackingStore;
 import io.confluent.connect.jdbc.util.SNSClient;
 import io.confluent.connect.jdbc.util.TableId;
 import io.confluent.connect.jdbc.util.Version;
@@ -71,6 +72,7 @@ public class JdbcSourceTask extends SourceTask {
   private final AtomicBoolean queryProcessed = new AtomicBoolean(false);
   private int resultSetCount;
   private int committedRecordCount;
+  private EventBackingStore backingStore;
 
   public JdbcSourceTask() {
     this.time = new SystemTime();
@@ -151,6 +153,21 @@ public class JdbcSourceTask extends SourceTask {
       }
       log.info("Partitions to fetch offsets {}", partitions.toString());
       offsets = context.offsetStorageReader().offsets(partitions);
+      String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
+      if (!topicArn.equals("")) {
+        backingStore = new EventBackingStore(
+          config.getString(JdbcSourceTaskConfig.BROKER_URL_CONFIG)
+        );
+        Boolean eventStatus = Boolean.valueOf(
+            backingStore.get(
+              config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG) 
+              + "." 
+              + config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG)
+            )
+        );
+        snsEventPushed.set(eventStatus);
+        log.info("Event status is {} ", eventStatus);
+      }
       log.info("The partition offsets are {}", offsets);
     }
 
@@ -219,11 +236,6 @@ public class JdbcSourceTask extends SourceTask {
                 offset
             )
         );
-        // set snsEventPushed value from offset
-        if (offset != null && offset.get("event") != null) {
-          snsEventPushed.set((Boolean)offset.get("event"));
-        }
-
       } else if (mode.equals(JdbcSourceTaskConfig.MODE_INCREMENTING)) {
         tableQueue.add(
             new TimestampIncrementingTableQuerier(
@@ -484,30 +496,24 @@ public class JdbcSourceTask extends SourceTask {
       // send success SNS event
       String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
       if (!topicArn.equals("")) {
-        final List<SourceRecord> results = new ArrayList<>();
-        final Map<String, String> partition = Collections.singletonMap(
-            JdbcSourceConnectorConstants.QUERY_NAME_KEY,
-            JdbcSourceConnectorConstants.QUERY_NAME_VALUE
-        );
+        
         String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
         topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
+        String feedId = config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG);
+        String runTime = config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG);
         Map<String, String> payload = new HashMap<String, String>();
+        payload.put("feedId", feedId);
+        payload.put("runTime", runTime);
         payload.put("status", "success");
         payload.put("topic", topicName);
-        payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
         payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
         payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
-        payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
         payload.put("publishedCount", Integer.toString(this.resultSetCount));
         JSONObject message = new JSONObject(payload);
         log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
         new SNSClient(config).publish(topicArn, message.toJSONString());
         snsEventPushed.set(true);
-        // set offset to snsEventPushed:true
-        Map<String, Object> currentOffset = querier.getOffset();
-        currentOffset.put("event", true);
-        results.add(new SourceRecord(partition, currentOffset, topicName, null, null));
-        return results;
+        backingStore.set(feedId + "." + runTime, "true");
       }
     }
     return null;

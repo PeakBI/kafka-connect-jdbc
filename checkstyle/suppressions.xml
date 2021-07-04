@@ -25,7 +25,7 @@
               files="(ColumnDefinition|GenericDatabaseDialect|SqlServerDatabaseDialect|PostgreSqlDatabaseDialect).java"/>
               
     <suppress checks="AbbreviationAsWordInName"
-    		  files="(GenericDatabaseDialect|JdbcSourceConnectorConfig|SNSClient).java" />    
+    		  files="(GenericDatabaseDialect|JdbcSourceConnectorConfig|SNSClient|EventBackingStore).java" />    
     		  
     <suppress checks="RegexpHeader"
     		  files="(SNSClient|TableListProducer).java" />
