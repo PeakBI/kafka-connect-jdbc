@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-
+import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -66,7 +66,7 @@ public class EventBackingStore {
     consumerProperties.put("bootstrap.servers", brokerUrl);
     consumerProperties.put("key.deserializer", StringDeserializer.class);
     consumerProperties.put("value.deserializer", StringDeserializer.class);
-    consumerProperties.put("group.id", "events");
+    consumerProperties.put("group.id", "events-" + UUID.randomUUID().toString());
     consumerProperties.put("auto.offset.reset", "earliest");
     this.consumer = new KafkaConsumer<String, String>(consumerProperties);
     this.consumer.subscribe(Collections.singleton(EVENT_BACKING_STORE_TOPIC));
