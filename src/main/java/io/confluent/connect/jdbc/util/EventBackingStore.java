@@ -43,13 +43,13 @@ public class EventBackingStore {
   private Map<String, String> eventStatus;
 
   private void readTillEnd() {
-    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(60000));
+    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(10000));
     while (records.count() > 0) {
       for (ConsumerRecord<String, String> record: records) {
         this.eventStatus.put(record.key(), record.value());
       }
       this.consumer.commitAsync();
-      records = this.consumer.poll(Duration.ofMillis(60000));
+      records = this.consumer.poll(Duration.ofMillis(10000));
     }
   }
 
