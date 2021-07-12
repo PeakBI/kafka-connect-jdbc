@@ -514,6 +514,7 @@ public class JdbcSourceTask extends SourceTask {
         new SNSClient(config).publish(topicArn, message.toJSONString());
         snsEventPushed.set(true);
         backingStore.set(feedId + "." + runTime, "true");
+        backingStore.close();
       }
     }
     return null;

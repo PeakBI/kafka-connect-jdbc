@@ -43,22 +43,15 @@ public class EventBackingStore {
   private Producer<String, String> producer;
   private Consumer<String, String> consumer;
   private Map<String, String> eventStatus;
-  private Long lastReadOffset;
 
   private void readTillEnd() {
-    if (lastReadOffset > -1) {
-      consumer.seek(new TopicPartition(EVENT_BACKING_STORE_TOPIC, 0), lastReadOffset);
-    }
-    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(30000));
+    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(60000));
     while (records.count() > 0) {
       for (ConsumerRecord<String, String> record: records) {
         this.eventStatus.put(record.key(), record.value());
       }
-      List<ConsumerRecord<String, String>> recordList = records.records(
-          new TopicPartition(EVENT_BACKING_STORE_TOPIC, 0)
-      );
-      this.lastReadOffset = recordList.get(records.count() - 1).offset();
-      records = this.consumer.poll(Duration.ofMillis(100));
+      this.consumer.commitAsync();
+      records = this.consumer.poll(Duration.ofMillis(60000));
     }
   }
 
@@ -81,10 +74,8 @@ public class EventBackingStore {
     this.consumer.subscribe(Collections.singleton(EVENT_BACKING_STORE_TOPIC));
 
     this.eventStatus = new HashMap<String, String>();
-    this.lastReadOffset = Long.valueOf(-1);
     this.readTillEnd();
-    log.info("Event backing store initialized with {} records and offset {} ", 
-        this.eventStatus.size(), this.lastReadOffset);
+    log.info("Event backing store initialized with {} records", this.eventStatus.size());
   }
 
   public String get(String key) {
@@ -93,7 +84,14 @@ public class EventBackingStore {
   }
 
   public void set(String key, String value) {
-    this.eventStatus.put(key, value);
-    this.producer.send(new ProducerRecord<String, String>(EVENT_BACKING_STORE_TOPIC, key, value)); 
+    if (this.eventStatus.get(key) == null) {
+      this.eventStatus.put(key, value);
+      this.producer.send(new ProducerRecord<String, String>(EVENT_BACKING_STORE_TOPIC, key, value));
+    }
+  }
+
+  public void close() {
+    this.producer.close();
+    this.consumer.close();
   }
 }
