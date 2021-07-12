@@ -49,7 +49,7 @@ public class EventBackingStore {
     if (lastReadOffset > -1) {
       consumer.seek(new TopicPartition(EVENT_BACKING_STORE_TOPIC, 0), lastReadOffset);
     }
-    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(10000));
+    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(30000));
     while (records.count() > 0) {
       for (ConsumerRecord<String, String> record: records) {
         this.eventStatus.put(record.key(), record.value());
@@ -83,7 +83,8 @@ public class EventBackingStore {
     this.eventStatus = new HashMap<String, String>();
     this.lastReadOffset = Long.valueOf(-1);
     this.readTillEnd();
-    log.info("Event backing store initialized with {} ", this.eventStatus.toString());
+    log.info("Event backing store initialized with {} records and offset {} ", 
+        this.eventStatus.size(), this.lastReadOffset);
   }
 
   public String get(String key) {
