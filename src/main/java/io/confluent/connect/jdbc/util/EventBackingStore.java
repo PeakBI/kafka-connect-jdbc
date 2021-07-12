@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -32,8 +33,11 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EventBackingStore {
+  private final Logger log = LoggerFactory.getLogger(EventBackingStore.class);
   public static final String EVENT_BACKING_STORE_TOPIC = "__event_status";
   
   private Producer<String, String> producer;
@@ -45,7 +49,7 @@ public class EventBackingStore {
     if (lastReadOffset > -1) {
       consumer.seek(new TopicPartition(EVENT_BACKING_STORE_TOPIC, 0), lastReadOffset);
     }
-    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(1000));
+    ConsumerRecords<String, String> records = this.consumer.poll(Duration.ofMillis(10000));
     while (records.count() > 0) {
       for (ConsumerRecord<String, String> record: records) {
         this.eventStatus.put(record.key(), record.value());
@@ -79,6 +83,7 @@ public class EventBackingStore {
     this.eventStatus = new HashMap<String, String>();
     this.lastReadOffset = Long.valueOf(-1);
     this.readTillEnd();
+    log.info("Event backing store initialized with {} ", this.eventStatus.toString());
   }
 
   public String get(String key) {
