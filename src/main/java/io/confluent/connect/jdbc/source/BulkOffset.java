@@ -63,12 +63,9 @@ public class BulkOffset {
 
     BulkOffset that = (BulkOffset) o;
 
-    if (bulkOffset != null
-        ? !bulkOffset.equals(that.bulkOffset)
-        : that.bulkOffset != null) {
-      return false;
-    }
-    return true;
+    return bulkOffset != null
+        ? bulkOffset.equals(that.bulkOffset)
+        : that.bulkOffset == null;
   }
 
   @Override
