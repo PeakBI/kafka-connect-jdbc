@@ -1103,8 +1103,8 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       }
 
       case Types.BOOLEAN: {
-        SchemaBuilder booleanBuilder = SchemaBuilder.bool().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder booleanBuilder = SchemaBuilder.bool()
+            .parameter("sqlType", columnDefn.typeName());
         builder.field(fieldName, optional ? booleanBuilder.optional().build()
             : booleanBuilder.build());
         break;
@@ -1115,7 +1115,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         SchemaBuilder intBuilder = SchemaBuilder.int8()
             .parameter("sqlType", columnDefn.typeName())
             .parameter("precision", Integer.toString(precision))
-            .parameter("scale", Integer.toString(scale));
+            .parameter("scale", Integer.toString(scale))
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+            .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
         builder.field(fieldName, optional ? intBuilder.optional().build() :
             intBuilder.build());
         break;
@@ -1126,14 +1128,18 @@ public class GenericDatabaseDialect implements DatabaseDialect {
           SchemaBuilder intBuilder = SchemaBuilder.int8()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build()
               : intBuilder.build());
         } else {
           SchemaBuilder intBuilder = SchemaBuilder.int16()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build() :
               intBuilder.build());
         }
@@ -1146,14 +1152,18 @@ public class GenericDatabaseDialect implements DatabaseDialect {
           SchemaBuilder intBuilder = SchemaBuilder.int16()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build()
               : intBuilder.build());
         } else {
           SchemaBuilder intBuilder = SchemaBuilder.int32()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build()
               : intBuilder.build());
         }
@@ -1166,14 +1176,18 @@ public class GenericDatabaseDialect implements DatabaseDialect {
           SchemaBuilder intBuilder = SchemaBuilder.int32()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build()
               : intBuilder.build());
         } else {
           SchemaBuilder intBuilder = SchemaBuilder.int64()
               .parameter("sqlType", columnDefn.typeName())
               .parameter("precision", Integer.toString(precision))
-              .parameter("scale", Integer.toString(scale));
+              .parameter("scale", Integer.toString(scale))
+              .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+              .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
           builder.field(fieldName, optional ? intBuilder.optional().build()
               : intBuilder.build());
         }
@@ -1185,7 +1199,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         SchemaBuilder intBuilder = SchemaBuilder.int64()
             .parameter("sqlType", columnDefn.typeName())
             .parameter("precision", Integer.toString(precision))
-            .parameter("scale", Integer.toString(scale));
+            .parameter("scale", Integer.toString(scale))
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+            .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
         builder.field(fieldName, optional ? intBuilder.optional().build()
             : intBuilder.build());
         break;
@@ -1193,8 +1209,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
 
       // REAL is a single precision floating point value, i.e. a Java float
       case Types.REAL: {
-        SchemaBuilder floatBuilder = SchemaBuilder.float32().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder floatBuilder = SchemaBuilder.float32()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? floatBuilder.optional().build()
             : floatBuilder.build());
         break;
@@ -1204,8 +1221,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       // for single precision
       case Types.FLOAT:
       case Types.DOUBLE: {
-        SchemaBuilder floatBuilder = SchemaBuilder.float64().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder floatBuilder = SchemaBuilder.float64()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? floatBuilder.optional().build()
             : floatBuilder.build());
         break;
@@ -1229,7 +1247,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
             }
             intBuilder = intBuilder.parameter("sqlType", columnDefn.typeName())
                 .parameter("precision", Integer.toString(precision))
-                .parameter("scale", Integer.toString(scale));
+                .parameter("scale", Integer.toString(scale))
+                .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+                .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
             builder.field(fieldName, optional ? intBuilder.optional().build()
                 : intBuilder.build());
             break;
@@ -1237,7 +1257,6 @@ public class GenericDatabaseDialect implements DatabaseDialect {
         } else if (mapNumerics == NumericMapping.BEST_FIT) {
           if (precision < 19) { // fits in primitive data types.
             if (scale < 1 && scale >= NUMERIC_TYPE_SCALE_LOW) { // integer
-              Schema schema;
               SchemaBuilder intBuilder = null;
               if (precision > 9) {
                 intBuilder = SchemaBuilder.int64();
@@ -1250,13 +1269,15 @@ public class GenericDatabaseDialect implements DatabaseDialect {
               }
               intBuilder = intBuilder.parameter("sqlType", columnDefn.typeName())
                   .parameter("precision", Integer.toString(precision))
-                  .parameter("scale", Integer.toString(scale));
+                  .parameter("scale", Integer.toString(scale))
+                  .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+                  .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
               builder.field(fieldName, optional ? intBuilder.optional().build()
                   : intBuilder.build());
               break;
             } else if (scale > 0) { // floating point - use double in all cases
-              SchemaBuilder floatBuilder = SchemaBuilder.float64().parameter("sqlType",
-                  columnDefn.typeName());
+              SchemaBuilder floatBuilder = SchemaBuilder.float64()
+                  .parameter("sqlType", columnDefn.typeName());
               Schema schema = (optional) ? floatBuilder.optional().build()
                   : floatBuilder.build();
               builder.field(fieldName, schema);
@@ -1265,8 +1286,10 @@ public class GenericDatabaseDialect implements DatabaseDialect {
           }
         }
 
-        SchemaBuilder stringBuilder = SchemaBuilder.string().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder stringBuilder = SchemaBuilder.string()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()))
+            .parameter("isAutoincrement", String.valueOf(columnDefn.isAutoIncrement()));
         builder.field(fieldName, optional ? stringBuilder.optional().build()
             : stringBuilder.build());
         break;
@@ -1289,8 +1312,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
       case Types.LONGVARBINARY: {
         // Some of these types will have fixed size, but we drop this from the schema conversion
         // since only fixed byte arrays can have a fixed size
-        SchemaBuilder stringBuilder = SchemaBuilder.string().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder stringBuilder = SchemaBuilder.string()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? stringBuilder.optional().build()
             : stringBuilder.build());
         break;
@@ -1298,8 +1322,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
 
       // Date is day + moth + year
       case Types.DATE: {
-        SchemaBuilder stringBuilder = SchemaBuilder.string().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder stringBuilder = SchemaBuilder.string()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? stringBuilder.optional().build()
             : stringBuilder.build());
         break;
@@ -1307,8 +1332,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
 
       // Time is a time of day -- hour, minute, seconds, nanoseconds
       case Types.TIME: {
-        SchemaBuilder stringBuilder = SchemaBuilder.string().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder stringBuilder = SchemaBuilder.string()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? stringBuilder.optional().build()
             : stringBuilder.build());
         break;
@@ -1316,8 +1342,9 @@ public class GenericDatabaseDialect implements DatabaseDialect {
 
       // Timestamp is a date + time
       case Types.TIMESTAMP: {
-        SchemaBuilder stringBuilder = SchemaBuilder.string().parameter("sqlType",
-            columnDefn.typeName());
+        SchemaBuilder stringBuilder = SchemaBuilder.string()
+            .parameter("sqlType", columnDefn.typeName())
+            .parameter("isPrimaryKey", String.valueOf(columnDefn.isPrimaryKey()));
         builder.field(fieldName, optional ? stringBuilder.optional().build()
             : stringBuilder.build());
         break;

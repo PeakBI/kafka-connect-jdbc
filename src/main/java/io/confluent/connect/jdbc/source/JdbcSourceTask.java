@@ -47,6 +47,7 @@ import io.confluent.connect.jdbc.dialect.DatabaseDialects;
 import io.confluent.connect.jdbc.util.CachedConnectionProvider;
 import io.confluent.connect.jdbc.util.ColumnDefinition;
 import io.confluent.connect.jdbc.util.ColumnId;
+import io.confluent.connect.jdbc.util.EventBackingStore;
 import io.confluent.connect.jdbc.util.SNSClient;
 import io.confluent.connect.jdbc.util.TableId;
 import io.confluent.connect.jdbc.util.Version;
@@ -71,6 +72,7 @@ public class JdbcSourceTask extends SourceTask {
   private final AtomicBoolean queryProcessed = new AtomicBoolean(false);
   private int resultSetCount;
   private int committedRecordCount;
+  private EventBackingStore backingStore;
 
   public JdbcSourceTask() {
     this.time = new SystemTime();
@@ -151,6 +153,21 @@ public class JdbcSourceTask extends SourceTask {
       }
       log.info("Partitions to fetch offsets {}", partitions.toString());
       offsets = context.offsetStorageReader().offsets(partitions);
+      String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
+      if (!topicArn.equals("")) {
+        backingStore = new EventBackingStore(
+          config.getString(JdbcSourceTaskConfig.BROKER_URL_CONFIG)
+        );
+        Boolean eventStatus = Boolean.valueOf(
+            backingStore.get(
+              config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG) 
+              + "." 
+              + config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG)
+            )
+        );
+        snsEventPushed.set(eventStatus);
+        log.info("Event status is {} ", eventStatus);
+      }
       log.info("The partition offsets are {}", offsets);
     }
 
@@ -326,12 +343,13 @@ public class JdbcSourceTask extends SourceTask {
   public void stop() throws ConnectException {
     log.info("Stopping JDBC source task");
     running.set(false);
+    backingStore.close();
     // All resources are closed at the end of 'poll()' when no longer running or
     // if there is an error
   }
 
   protected void closeResources() {
-    log.info("Closing resources for JDBC source task");
+    log.debug("Closing resources for JDBC source task");
     try {
       if (cachedConnectionProvider != null) {
         cachedConnectionProvider.close();
@@ -356,7 +374,7 @@ public class JdbcSourceTask extends SourceTask {
   public List<SourceRecord> poll() throws InterruptedException {
     log.info("{} Polling for new data");
 
-    while (running.get()) {
+    while (running.get() && !snsEventPushed.get()) {
       final TableQuerier querier = tableQueue.peek();
       log.info("Querier from table queue: {} with last update: {} ", querier.toString(), 
           querier.getLastUpdate());
@@ -461,10 +479,10 @@ public class JdbcSourceTask extends SourceTask {
     }
 
     // Only in case of shutdown
-    log.info("Task is being shutdown, running : {}", running.get());
+    log.debug("Task is being shutdown, running : {}", running.get());
     final TableQuerier querier = tableQueue.peek();
     if (querier != null) {
-      log.info("Resetting table queue with querier {} with last update {}", 
+      log.debug("Resetting table queue with querier {} with last update {}",
           querier.toString(), querier.getLastUpdate());
       resetAndRequeueHead(querier);
     }
@@ -479,27 +497,32 @@ public class JdbcSourceTask extends SourceTask {
       // send success SNS event
       String topicArn = config.getString(JdbcSourceTaskConfig.SNS_TOPIC_ARN_CONFIG);
       if (!topicArn.equals("")) {
+        
         String topicName = config.getString(JdbcSourceTaskConfig.TOPIC_PREFIX_CONFIG);
         topicName += config.getString(JdbcSourceTaskConfig.TABLE_NAME_CONFIG);
+        String feedId = config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG);
+        String runTime = config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG);
         Map<String, String> payload = new HashMap<String, String>();
+        payload.put("feedId", feedId);
+        payload.put("runTime", runTime);
         payload.put("status", "success");
         payload.put("topic", topicName);
-        payload.put("feedId", config.getString(JdbcSourceTaskConfig.FEED_ID_CONFIG));
         payload.put("feedRunId", config.getString(JdbcSourceTaskConfig.FEED_RUN_ID_CONFIG));
         payload.put("tenant", config.getString(JdbcSourceTaskConfig.TENANT_CONFIG));
-        payload.put("runTime", config.getString(JdbcSourceTaskConfig.FEED_RUNTIME_CONFIG));
         payload.put("publishedCount", Integer.toString(this.resultSetCount));
         JSONObject message = new JSONObject(payload);
         log.info("Sending event to SNS topic {} {}", topicArn, payload.toString());
         new SNSClient(config).publish(topicArn, message.toJSONString());
         snsEventPushed.set(true);
+        backingStore.set(feedId + "." + runTime, "true");
+        backingStore.close();
       }
     }
     return null;
   }
 
   private void resetAndRequeueHead(TableQuerier expectedHead) {
-    log.info("Resetting querier {}", expectedHead.toString());
+    log.debug("Resetting querier {}", expectedHead.toString());
     TableQuerier removedQuerier = tableQueue.poll();
     assert removedQuerier == expectedHead;
     expectedHead.reset(time.milliseconds());

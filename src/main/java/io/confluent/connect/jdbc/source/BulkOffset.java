@@ -15,14 +15,10 @@
 
 package io.confluent.connect.jdbc.source;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class BulkOffset {
-  private static final Logger log = LoggerFactory.getLogger(JdbcSourceTask.class);
   static final String BULK_FIELD = "bulk";
 
   private final Long bulkOffset;
@@ -40,7 +36,7 @@ public class BulkOffset {
   }
 
   public Map<String, Object> toMap() {
-    Map<String, Object> map = new HashMap<>(3);
+    Map<String, Object> map = new HashMap<>(1);
     if (bulkOffset != null) {
       map.put(BULK_FIELD, bulkOffset);
     }
@@ -52,8 +48,8 @@ public class BulkOffset {
       return new BulkOffset(null);
     }
 
-    Long incr = (Long) map.get(BULK_FIELD);
-    return new BulkOffset(incr);
+    Long offset = (Long) map.get(BULK_FIELD);
+    return new BulkOffset(offset);
   }
 
   @Override
