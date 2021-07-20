@@ -1,8 +1,11 @@
-FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:5.5.1
+FROM confluentinc/cp-kafka-connect:6.2.0
 
 RUN apt-get update && apt-get install -y zip
 
 RUN mkdir -p /usr/share/java/kafka-salesforce-connect
+  && mkdir -p /usr/share/java/kafka-connect-jdbc
+  && mkdir -p /usr/share/java/kafka-connect-s3
+
 RUN echo "===> Collecting Salesforce connector" \
   && curl -O https://d1i4a15mxbxib1.cloudfront.net/api/plugins/confluentinc/kafka-connect-salesforce/versions/1.8.4/confluentinc-kafka-connect-salesforce-1.8.4.zip \
   && unzip confluentinc-kafka-connect-salesforce-1.8.4.zip 
@@ -41,10 +44,6 @@ RUN echo "===> Collecting AWS STS" \
 
 RUN echo "===> Collecting Simple JSON" \
   && wget -O /usr/share/java/kafka-connect-jdbc/json-simple-1.1.1.jar https://repo1.maven.org/maven2/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
-
-RUN echo "===> Updating JDBC jar" \
-  && rm -rf /usr/share/java/kafka-connect-jdbc/kafka-connect-jdbc-5.5.1.jar \
-  && rm -rf /usr/share/java/kafka-connect-s3/kafka-connect-s3-5.5.1.jar
 
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
