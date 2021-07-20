@@ -2,8 +2,8 @@ FROM confluentinc/cp-kafka-connect:6.2.0
 
 RUN apt-get update && apt-get install -y zip
 
-RUN mkdir -p /usr/share/java/kafka-salesforce-connect
-  && mkdir -p /usr/share/java/kafka-connect-jdbc
+RUN mkdir -p /usr/share/java/kafka-salesforce-connect \
+  && mkdir -p /usr/share/java/kafka-connect-jdbc \
   && mkdir -p /usr/share/java/kafka-connect-s3
 
 RUN echo "===> Collecting Salesforce connector" \
