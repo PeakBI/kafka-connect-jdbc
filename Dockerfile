@@ -1,4 +1,4 @@
-FROM confluentinc/cp-kafka-connect:6.2.0
+FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:6.1.1
 
 RUN apt-get update && apt-get install -y zip
 
