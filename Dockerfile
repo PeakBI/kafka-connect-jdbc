@@ -1,6 +1,8 @@
 FROM public.ecr.aws/johnpreston/confluentinc/cp-kafka-connect:6.1.1
 
-RUN apt-get update && apt-get install -y zip
+USER root
+
+RUN yum install -y zip
 
 RUN mkdir -p /usr/share/java/kafka-salesforce-connect \
   && mkdir -p /usr/share/java/kafka-connect-jdbc \
@@ -48,3 +50,5 @@ RUN echo "===> Collecting Simple JSON" \
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/java/kafka-connect-jdbc/
 
 COPY ./kafka-connect-storage-cloud/kafka-connect-s3/target/kafka-connect-s3-5.5.1.jar /usr/share/java/kafka-connect-s3/
+
+USER appuser
