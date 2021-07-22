@@ -52,7 +52,7 @@ RUN echo "===> Collecting Simple JSON" \
   && wget -O /usr/share/confluent-hub-components/confluentinc-kafka-connect-jdbc/lib/json-simple-1.1.1.jar https://repo1.maven.org/maven2/com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar
 
 RUN echo "===> Collecting HTTP Client" \
-  && wget -O /usr/share/confluent-hub-components/confluentinc-kafka-connect-jdbc/lib/httpclient-4.5.jar https://repo1.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5/httpclient-4.5.jar
+  && wget -O /usr/share/confluent-hub-components/confluentinc-kafka-connect-jdbc/lib/httpclient-4.5.jar https://repo1.maven.org/maven2/org/apache/httpcomponents/httpclient/4.5.13/httpclient-4.5.13.jar
 
 COPY ./target/kafka-connect-jdbc-5.5.1.jar /usr/share/confluent-hub-components/confluentinc-kafka-connect-jdbc/lib/
 
